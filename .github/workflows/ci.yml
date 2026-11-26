@@ -61,9 +61,11 @@ jobs:
         zotero:
           - { version: 7.0.32, ext: tar.bz2 }
           - { version: 10.0.8, ext: tar.xz }
-    env:
-      ZOTERO_DIR: ${{ runner.temp }}/zotero-${{ matrix.zotero.version }}
     steps:
+      # The runner context is not available in job-level env, so the path
+      # is exported from a step instead.
+      - name: Set Zotero install dir
+        run: echo "ZOTERO_DIR=$RUNNER_TEMP/zotero-${{ matrix.zotero.version }}" >> "$GITHUB_ENV"
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
