@@ -60,7 +60,7 @@
     "prettier": "^3.10.1",
     "semantic-release": "^26.0.1",
     "tsx": "^4.23.15",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "zotero-plugin-scaffold": "^0.9.4",
     "zotero-types": "^4.1.3"
   }
