@@ -1,0 +1,67 @@
+{
+  "name": "zotero-annotation-crosshair",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Page-wide crosshair guides for the Select Area tool in Zotero's PDF reader",
+  "config": {
+    "addonName": "Annotation Crosshair",
+    "addonID": "annotation-crosshair@ronmckay.github.io",
+    "addonRef": "annotationcrosshair",
+    "addonInstance": "AnnotationCrosshair",
+    "prefsPrefix": "extensions.zotero.annotationcrosshair"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RonMcKay/zotero-annotation-cross-hair.git"
+  },
+  "author": "Philipp Oberdiek",
+  "bugs": {
+    "url": "https://github.com/RonMcKay/zotero-annotation-cross-hair/issues"
+  },
+  "homepage": "https://github.com/RonMcKay/zotero-annotation-cross-hair#readme",
+  "license": "MIT",
+  "scripts": {
+    "start": "zotero-plugin serve",
+    "build": "zotero-plugin build && npm run typecheck",
+    "typecheck": "tsc --noEmit && tsc -p test --noEmit",
+    "lint:check": "prettier --check . && eslint .",
+    "lint:fix": "prettier --write . && eslint . --fix",
+    "test": "npm run test:unit && npm run test:zotero",
+    "test:unit": "mocha",
+    "test:zotero": "zotero-plugin test --exit-on-finish"
+  },
+  "prettier": {
+    "printWidth": 80,
+    "tabWidth": 2,
+    "endOfLine": "lf",
+    "overrides": [
+      {
+        "files": [
+          "*.xhtml"
+        ],
+        "options": {
+          "htmlWhitespaceSensitivity": "css"
+        }
+      }
+    ]
+  },
+  "devDependencies": {
+    "@semantic-release/exec": "^7.1.0",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^26.6.11",
+    "@zotero-plugin/eslint-config": "^0.6.10",
+    "chai": "^6.3.0",
+    "conventional-changelog-conventionalcommits": "^10.4.1",
+    "eslint": "^10.15.0",
+    "happy-dom": "^21.0.4",
+    "mocha": "^12.0.3",
+    "prettier": "^3.10.1",
+    "semantic-release": "^26.0.1",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "zotero-plugin-scaffold": "^0.9.4",
+    "zotero-types": "^4.1.3"
+  }
+}

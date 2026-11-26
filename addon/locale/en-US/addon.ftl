@@ -1,0 +1,1 @@
+prefs-title = Annotation Crosshair

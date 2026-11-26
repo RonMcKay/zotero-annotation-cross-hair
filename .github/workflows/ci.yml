@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npm run lint:check
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npm run test:unit
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: xpi
+          path: .scaffold/build/*.xpi
+          if-no-files-found: error
+
+  zotero:
+    name: zotero (${{ matrix.zotero.version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        zotero:
+          - { version: 7.0.32, ext: tar.bz2 }
+          - { version: 10.0.8, ext: tar.xz }
+    env:
+      ZOTERO_DIR: ${{ runner.temp }}/zotero-${{ matrix.zotero.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - name: Cache Zotero
+        id: cache-zotero
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.ZOTERO_DIR }}
+          key: zotero-linux-x86_64-${{ matrix.zotero.version }}
+      - name: Download Zotero
+        if: steps.cache-zotero.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$ZOTERO_DIR"
+          curl -fsSL -o zotero.${{ matrix.zotero.ext }} \
+            "https://download.zotero.org/client/release/${{ matrix.zotero.version }}/Zotero-${{ matrix.zotero.version }}_linux-x86_64.${{ matrix.zotero.ext }}"
+          tar -xf zotero.${{ matrix.zotero.ext }} -C "$ZOTERO_DIR"
+          rm zotero.${{ matrix.zotero.ext }}
+      - name: Point the test runner at Zotero
+        run: echo "ZOTERO_PLUGIN_ZOTERO_BIN_PATH=$ZOTERO_DIR/Zotero_linux-x86_64/zotero" >> "$GITHUB_ENV"
+      # The scaffold installs Xvfb and Zotero's system libraries itself on
+      # Ubuntu runners and starts Zotero with a throwaway profile/data dir.
+      - run: npm run test:zotero
