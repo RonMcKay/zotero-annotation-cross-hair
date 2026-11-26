@@ -97,3 +97,18 @@ jobs:
           sudo apt-get install -y --no-install-recommends libasound2t64 libdbus-glib-1-2
       # The scaffold starts Xvfb and Zotero with a throwaway profile/data dir.
       - run: npm run test:zotero
+
+  # Single required check for branch protection. Matrix job names contain
+  # the Zotero version, so requiring them directly would block every PR
+  # after a version bump until the ruleset is edited.
+  ci-ok:
+    if: always()
+    needs: [lint, unit, build, zotero]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All CI jobs succeeded
+        # `if: always()` matters: without it this job is skipped when a
+        # dependency fails, and a skipped required check counts as passing.
+        run: |
+          echo "Results: ${{ join(needs.*.result, ', ') }}"
+          test "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" = "false"
