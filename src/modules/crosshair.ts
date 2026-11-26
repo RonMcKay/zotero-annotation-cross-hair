@@ -266,15 +266,22 @@ export class CrosshairController {
   }
 
   /**
-   * Whether the lines sit on a dark page. The reader sets the page
-   * background as `--background-color` on the view's root element (from app
-   * mode, the reader theme for that mode and per-reader overrides), so it is
-   * the best signal. The app's colour scheme is only a fallback.
+   * Whether the lines sit on a dark page. Newer Zotero sets the page background
+   * as `--background-color` on the view's root element (from app mode, the
+   * reader theme for that mode and per-reader overrides), so it is the best
+   * signal. Zotero 7 has no themes: its viewer CSS darkens pages when the
+   * reader's `data-color-scheme` is "dark" or the app prefers dark, unless
+   * the body has `disableDarkMode` ("use dark mode for content" is off).
    */
   private pageIsDark(): boolean {
-    const root = this.win.document.documentElement as HTMLElement | null;
+    const doc = this.win.document;
+    const root = doc.documentElement as HTMLElement | null;
     const bg = root?.style.getPropertyValue("--background-color") ?? "";
-    return isDarkBackground(bg) ?? !!this.darkQuery?.matches;
+    const fromTheme = isDarkBackground(bg);
+    if (fromTheme !== null) return fromTheme;
+    const darkScheme =
+      root?.dataset.colorScheme === "dark" || !!this.darkQuery?.matches;
+    return darkScheme && !doc.body?.classList.contains("disableDarkMode");
   }
 
   private inViewport(p: Point): boolean {
