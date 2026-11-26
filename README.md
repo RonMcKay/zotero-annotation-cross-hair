@@ -9,6 +9,8 @@ thin horizontal and vertical line follows the pointer across the whole PDF
 page while Select Area is active, so you can line up the edges before and
 while you drag.
 
+![Crosshair guides following the pointer while selecting a figure in Zotero's PDF reader](docs/crosshair.gif)
+
 - Lines span the page under the pointer and are 1px wide, centred on the
   pointer.
 - They keep tracking while you drag, clamped to the page you started on.
