@@ -296,6 +296,47 @@ describe("CrosshairController", function () {
     expect(css).to.contain("cursor: crosshair !important");
   });
 
+  it("hides the system cursor while the lines cross at the pointer", function () {
+    const t = setup();
+    const css = t.doc.getElementById("annotationcrosshair-style")!.textContent;
+    expect(css).to.contain(
+      'html.annotationcrosshair-active.annotationcrosshair-hide-cursor #viewerContainer[style*="cursor: default"]',
+    );
+    expect(css).to.contain("cursor: none !important");
+    const hidden = () =>
+      t.doc.documentElement!.classList.contains(
+        "annotationcrosshair-hide-cursor",
+      );
+    t.move(100, 200);
+    expect(hidden()).to.be.true;
+    t.move(100, 805);
+    expect(hidden()).to.be.false;
+    t.move(100, 200);
+    t.state.tool = false;
+    t.ctrl.refresh();
+    expect(hidden()).to.be.false;
+    t.state.tool = true;
+    t.move(100, 200);
+    t.state.settings = { ...t.state.settings, enabled: false };
+    t.ctrl.refresh();
+    expect(hidden()).to.be.false;
+  });
+
+  it("shows the system cursor when a drag leaves the page", function () {
+    const t = setup();
+    const hidden = () =>
+      t.doc.documentElement!.classList.contains(
+        "annotationcrosshair-hide-cursor",
+      );
+    t.fire("pointerdown", 100, 700, { button: 0, buttons: 1 });
+    expect(hidden()).to.be.true;
+    t.fire("pointermove", 100, 900, { buttons: 1 });
+    expect(t.visible()).to.be.true;
+    expect(hidden()).to.be.false;
+    t.fire("pointermove", 100, 750, { buttons: 1 });
+    expect(hidden()).to.be.true;
+  });
+
   it("removes everything on destroy and ignores later events", function () {
     const t = setup();
     let destroyed = 0;
@@ -307,6 +348,11 @@ describe("CrosshairController", function () {
     expect(t.doc.getElementById("annotationcrosshair-style")).to.be.null;
     expect(
       t.doc.documentElement!.classList.contains("annotationcrosshair-active"),
+    ).to.be.false;
+    expect(
+      t.doc.documentElement!.classList.contains(
+        "annotationcrosshair-hide-cursor",
+      ),
     ).to.be.false;
     expect(t.ctrl.destroyed).to.be.true;
     expect(destroyed).to.equal(1);

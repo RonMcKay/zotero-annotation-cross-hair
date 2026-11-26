@@ -11,10 +11,15 @@ const PREFIX = "annotationcrosshair";
 const OVERLAY_ID = `${PREFIX}-overlay`;
 const STYLE_ID = `${PREFIX}-style`;
 const ACTIVE_CLASS = `${PREFIX}-active`;
+const HIDE_CURSOR_CLASS = `${PREFIX}-hide-cursor`;
 
 // The reader sets `cursor` inline on #viewerContainer. Only its plain
 // `default` cursor is replaced, so resize/move cursors over existing
-// annotations keep working.
+// annotations keep working. While the lines run through the pointer they
+// are the cursor, so the system cursor is hidden: Windows draws its
+// crosshair cursor by inverting the pixels under it, which makes the lines
+// look faint where the two overlap. During a drag that leaves the page the
+// lines are clamped to its edge, so a crosshair cursor marks the pointer.
 const STYLESHEET = `
 #${OVERLAY_ID} {
   position: fixed;
@@ -31,6 +36,9 @@ const STYLESHEET = `
 #${OVERLAY_ID} > .v { width: 1px; }
 html.${ACTIVE_CLASS} #viewerContainer[style*="cursor: default"] {
   cursor: crosshair !important;
+}
+html.${ACTIVE_CLASS}.${HIDE_CURSOR_CLASS} #viewerContainer[style*="cursor: default"] {
+  cursor: none !important;
 }
 `;
 
@@ -163,7 +171,8 @@ export class CrosshairController {
       height: `${v.height}px`,
       backgroundColor: color,
     });
-    this.setVisible(true);
+    // Lines cross at the pointer only when it is on the page (not clamped).
+    this.setVisible(true, findPageIndex([page], p) === 0);
     return pageIndex;
   }
 
@@ -208,7 +217,7 @@ export class CrosshairController {
         this.onPointerLeave,
         LISTENER_OPTIONS,
       );
-      root?.classList.remove(ACTIVE_CLASS);
+      root?.classList.remove(ACTIVE_CLASS, HIDE_CURSOR_CLASS);
       this.darkQuery?.removeEventListener("change", this.onRefreshEvent);
       this.overlay?.remove();
       this.style?.remove();
@@ -293,9 +302,11 @@ export class CrosshairController {
     );
   }
 
-  private setVisible(visible: boolean): void {
+  private setVisible(visible: boolean, onPointer = false): void {
     if (!this.overlay) return;
     this.overlay.style.display = visible ? "" : "none";
-    this.win.document.documentElement?.classList.toggle(ACTIVE_CLASS, visible);
+    const classes = this.win.document.documentElement?.classList;
+    classes?.toggle(ACTIVE_CLASS, visible);
+    classes?.toggle(HIDE_CURSOR_CLASS, visible && onPointer);
   }
 }
