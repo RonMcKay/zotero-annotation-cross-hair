@@ -26,6 +26,23 @@ async function waitFor<T>(
 }
 
 /**
+ * Waits until the reader shows `scheme` pages. Newer Zotero sets the theme's
+ * page background as `--background-color`; Zotero 7 has no themes and only
+ * sets `data-color-scheme` on the view's root element.
+ */
+function waitForColorScheme(
+  doc: Document,
+  scheme: "light" | "dark",
+  background: string,
+): Promise<boolean> {
+  return waitFor(() => {
+    const root = doc.documentElement as HTMLElement;
+    const bg = root.style.getPropertyValue("--background-color");
+    return bg ? bg === background : root.dataset.colorScheme === scheme;
+  }, `${scheme} page background`);
+}
+
+/**
  * The scaffold runs tests with a throwaway data directory under
  * `.scaffold/test/data`. Refuse to touch anything else, so a misconfigured
  * run can never import test files into a real library.
@@ -124,12 +141,7 @@ describe("Annotation Crosshair in Zotero", function () {
     try {
       // Pin light pages so the test doesn't depend on the OS appearance.
       reader._internalReader.setColorScheme("light");
-      await waitFor(
-        () =>
-          doc.documentElement.style.getPropertyValue("--background-color") ===
-          "#FFFFFF",
-        "light page background",
-      );
+      await waitForColorScheme(doc, "light", "#FFFFFF");
       setTool(reader, "image");
       doc.getElementById("viewerContainer").dispatchEvent(
         new win.PointerEvent("pointermove", {
@@ -162,12 +174,7 @@ describe("Annotation Crosshair in Zotero", function () {
     try {
       // Zotero's default dark reader theme is "Dark" (#2E3440).
       reader._internalReader.setColorScheme("dark");
-      await waitFor(
-        () =>
-          doc.documentElement.style.getPropertyValue("--background-color") ===
-          "#2E3440",
-        "dark page background",
-      );
+      await waitForColorScheme(doc, "dark", "#2E3440");
       const r = doc
         .querySelector("#viewerContainer .page")
         .getBoundingClientRect();
@@ -207,9 +214,14 @@ describe("Annotation Crosshair in Zotero", function () {
     );
     const r = page.getBoundingClientRect();
     // Aim at the visible part of the page: a real pointer is always inside
-    // the viewport unless it is dragging.
-    const x = (Math.max(r.left, 0) + Math.min(r.right, win.innerWidth)) / 2;
-    const y = (Math.max(r.top, 0) + Math.min(r.bottom, win.innerHeight)) / 2;
+    // the viewport unless it is dragging. Whole pixels, because Zotero 7's
+    // Firefox truncates fractional MouseEvent coordinates.
+    const x = Math.round(
+      (Math.max(r.left, 0) + Math.min(r.right, win.innerWidth)) / 2,
+    );
+    const y = Math.round(
+      (Math.max(r.top, 0) + Math.min(r.bottom, win.innerHeight)) / 2,
+    );
     const move = () =>
       doc.getElementById("viewerContainer").dispatchEvent(
         new win.PointerEvent("pointermove", {

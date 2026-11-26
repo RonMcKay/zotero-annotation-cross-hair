@@ -213,6 +213,21 @@ describe("CrosshairController", function () {
     expectColor(t.line("h"), "#bbbbbb");
   });
 
+  it("uses the dark-page colour for a dark reader scheme without themes (Zotero 7)", function () {
+    const t = setup();
+    (t.doc.documentElement as HTMLElement).dataset.colorScheme = "dark";
+    t.move(100, 200);
+    expectColor(t.line("h"), "#bbbbbb");
+  });
+
+  it("keeps the light-page colour when dark mode for content is off (Zotero 7)", function () {
+    const t = setup();
+    (t.doc.documentElement as HTMLElement).dataset.colorScheme = "dark";
+    t.doc.body!.classList.add("disableDarkMode");
+    t.move(100, 200);
+    expectColor(t.line("h"), "#666666");
+  });
+
   it("updates immediately when the app colour scheme changes", function () {
     const t = setup();
     t.move(100, 200);
