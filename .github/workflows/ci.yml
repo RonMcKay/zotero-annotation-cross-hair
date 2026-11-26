@@ -88,6 +88,12 @@ jobs:
           rm zotero.${{ matrix.zotero.ext }}
       - name: Point the test runner at Zotero
         run: echo "ZOTERO_PLUGIN_ZOTERO_BIN_PATH=$ZOTERO_DIR/Zotero_linux-x86_64/zotero" >> "$GITHUB_ENV"
-      # The scaffold installs Xvfb and Zotero's system libraries itself on
-      # Ubuntu runners and starts Zotero with a throwaway profile/data dir.
+      # The scaffold only installs Zotero's system libraries on Ubuntu 24.04
+      # and skips them elsewhere; Zotero 7 cannot start without
+      # libdbus-glib-1-2, so install them here for any runner image.
+      - name: Install Zotero system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libasound2t64 libdbus-glib-1-2
+      # The scaffold starts Xvfb and Zotero with a throwaway profile/data dir.
       - run: npm run test:zotero
